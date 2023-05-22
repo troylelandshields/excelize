@@ -151,6 +151,26 @@ func (f *File) GetMergeCells(sheet string) ([]MergeCell, error) {
 	return mergeCells, err
 }
 
+// GetMergeCellsFast provides a function to get all merged cells from a worksheet without also getting their values
+func (f *File) GetMergeCellsFast(sheet string) ([]MergeCell, error) {
+	var mergeCells []MergeCell
+	ws, err := f.workSheetReader(sheet)
+	if err != nil {
+		return mergeCells, err
+	}
+	if ws.MergeCells != nil {
+		if err = f.mergeOverlapCells(ws); err != nil {
+			return mergeCells, err
+		}
+		mergeCells = make([]MergeCell, 0, len(ws.MergeCells.Cells))
+		for i := range ws.MergeCells.Cells {
+			ref := ws.MergeCells.Cells[i].Ref
+			mergeCells = append(mergeCells, []string{ref, ""})
+		}
+	}
+	return mergeCells, err
+}
+
 // overlapRange calculate overlap range of merged cells, and returns max
 // column and rows of the range.
 func overlapRange(ws *xlsxWorksheet) (row, col int, err error) {
